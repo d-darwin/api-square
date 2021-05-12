@@ -24,7 +24,7 @@ function doThatStuff(url) {
       ])
 
       changeSquareColor(apiResponse)
-      warn('square painted')
+      warn('square painted with apiResponseCode: ' + apiResponse)
     } catch (e) {
       // констатируем ошибку и пробрасываем исключение выше
       warn('network error')
@@ -108,7 +108,7 @@ function doThatStuff(url) {
     warn('request send')
 
     return fetch(url).then(res => {
-      warn('response got')
+      warn(`response got width`)
 
       if (res.status !== 200) {
         // при ошибке на сервере возвращаем
