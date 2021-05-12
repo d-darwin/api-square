@@ -1,13 +1,14 @@
-doThatStuff('https://keev.me/f/slowpoke.php')
+startMysteriousProcess('https://keev.me/f/slowpoke.php')
 
 /**
- * Рендерит черный квадрат, спустя delay анимирует квадрат и посылате запрос,
- *  после анимации и получения ответа, меняет цвет квадрата.
+ * Рендерит черный квадрат;
+ * спустя задержку анимирует квадрат и посылает запрос;
+ * после анимации и получения ответа, меняет цвет квадрата.
  *
  * @param url - ендпоинт запроса
  * @param delay - задержка до начала анимации и запроса
  */
-function doThatStuff(url, delay = 1000) {
+function startMysteriousProcess(url, delay = 1000) {
   warn('function started')
 
   if (!isUrlValid(url)) {
