@@ -14,19 +14,16 @@ function doThatStuff(url, delay = 1000) {
     throw new Error()
   }
 
-  // Сохраняем элемент в контексте IEFE, чтобы иметь возможность манипулировать его анимацией и цветом
   const square = document.createElement('div')
   renderSquare(square)
 
   warn('square rendered')
 
-  // Спустя секунду начинаем анимацию и посылаем запрос к API
   setTimeout(async () => {
     // Promise.all гарантирует, что дальнейший код (смена цвета квадрата) исполнится
-    // только после того, как разрешатся оба промиса
+    // только после того, как закончится анимация и будет получен ответ от сервера
     const [_, apiResponse] = await Promise.all([
       animateSquare(square),
-      // возможные сетевые ошибки обрабатываем внутри метода
       getUrlData(url)
     ])
 
@@ -38,7 +35,7 @@ function doThatStuff(url, delay = 1000) {
    * Служебные функции и константы
    ********************************/
 
-  /** Используется для индикации состояния ответа сервера
+  /** Используется для индикации состояния ответа сервера.
    * @type {{readonly SUCCESS: number, _SUCCESS: number, _ERROR: number, readonly ERROR: number, _FAILURE: number, readonly FAILURE: number}}
    */
   const RESPONSE_STATE = {
@@ -52,7 +49,7 @@ function doThatStuff(url, delay = 1000) {
     }
 
   /**
-   * Простая проверка валидности url
+   * Простая проверка валидности url.
    * @param url
    * @returns {boolean}
    */
@@ -61,7 +58,7 @@ function doThatStuff(url, delay = 1000) {
   }
 
   /**
-   * Задаем свойства квадрата и добавляем его в DOM
+   * Задаем свойства квадрата и добавляем его в DOM.
    * @param square - DOM элемент
    */
   function renderSquare(square) {
@@ -78,7 +75,7 @@ function doThatStuff(url, delay = 1000) {
   }
 
   /**
-   * Анимирует движение квадрата слева направо
+   * Анимирует движение квадрата слева направо.
    * @param square - DOM элемент
    * @param duration - продолжительность анимации
    * @param distanceX - смещение
@@ -115,20 +112,13 @@ function doThatStuff(url, delay = 1000) {
         warn('response got')
 
         if (res.status !== 200) {
-          // при ошибке на сервере возвращаем
-          // -1 - RESPONSE_STATE.ERROR
           return Promise.resolve(RESPONSE_STATE.ERROR)
         }
 
-        // по условиям задачи (API контракту) может быть только
-        // 0 - RESPONSE_STATE.FAILURE и
-        // 1 - RESPONSE_STATE.SUCCESS
         return res.json()
       })
       .catch(() => {
         warn('network error')
-        // при сетевой ошибке возвращаем
-        // -1 - RESPONSE_STATE.ERROR
         return Promise.resolve(RESPONSE_STATE.ERROR)
       })
   }
