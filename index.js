@@ -1,6 +1,13 @@
 doThatStuff('https://keev.me/f/slowpoke.php')
 
-function doThatStuff(url) {
+/**
+ * Рендерит черный квадрат, спустя delay анимирует квадрат и посылате запрос,
+ *  после анимации и получения ответа, меняет цвет квадрата.
+ *
+ * @param url - ендпоинт запроса
+ * @param delay - задержка до начала анимации и запроса
+ */
+function doThatStuff(url, delay = 1000) {
   warn('function started')
 
   if (!isUrlValid(url)) {
@@ -15,24 +22,17 @@ function doThatStuff(url) {
 
   // Спустя секунду начинаем анимацию и посылаем запрос к API
   setTimeout(async () => {
-    try {
-      // Promise.all гарантирует, что дальнейший код (смена цвета квадрата) исполнится
-      // только после того, как разрешатся оба промиса
-      const [_, apiResponse] = await Promise.all([
-        animateSquare(square),
-        getUrlData(url)
-      ])
+    // Promise.all гарантирует, что дальнейший код (смена цвета квадрата) исполнится
+    // только после того, как разрешатся оба промиса
+    const [_, apiResponse] = await Promise.all([
+      animateSquare(square),
+      // возможные сетевые ошибки обрабатываем внутри метода
+      getUrlData(url)
+    ])
 
-      changeSquareColor(square, apiResponse)
-      warn('square painted with apiResponseCode: ' + apiResponse)
-    } catch (e) {
-      // констатируем ошибку и пробрасываем исключение выше
-      warn('network error')
-      throw e
-    }
-  }, 1000)
-
-
+    changeSquareColor(square, apiResponse)
+    warn('square painted with apiResponse: ' + apiResponse)
+  }, delay)
 
   /********************************
    * Служебные функции и константы
@@ -110,20 +110,27 @@ function doThatStuff(url) {
   function getUrlData(url) {
     warn('request send')
 
-    return fetch(url).then(res => {
-      warn(`response got width`)
+    return fetch(url)
+      .then(res => {
+        warn('response got')
 
-      if (res.status !== 200) {
-        // при ошибке на сервере возвращаем
+        if (res.status !== 200) {
+          // при ошибке на сервере возвращаем
+          // -1 - RESPONSE_STATE.ERROR
+          return Promise.resolve(RESPONSE_STATE.ERROR)
+        }
+
+        // по условиям задачи (API контракту) может быть только
+        // 0 - RESPONSE_STATE.FAILURE и
+        // 1 - RESPONSE_STATE.SUCCESS
+        return res.json()
+      })
+      .catch(() => {
+        warn('network error')
+        // при сетевой ошибке возвращаем
         // -1 - RESPONSE_STATE.ERROR
         return Promise.resolve(RESPONSE_STATE.ERROR)
-      }
-
-      // по условиям задачи (API контракту) может быть только
-      // 0 - RESPONSE_STATE.FAILURE и
-      // 1 - RESPONSE_STATE.SUCCESS
-      return res.json()
-    })
+      })
   }
 
   /**
