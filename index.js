@@ -1,10 +1,8 @@
-const url = 'https://keev.me/f/slowpoke.php';
+doThatStuff('https://keev.me/f/slowpoke.php')
 
-// Пишем функцию в виде IEFE, чтобы не помешать другим скриптам.
-// Конечно, в таком случае и ulr использовать в глобальной области видимости тоже не очень разумно,
-// но это в конце-концов, просто тестовое задание, где нужно что-то продемонстрировать )))
-(async function (url) {
-  console.warn('function started at:', performance.now())
+function doThatStuff(url) {
+  warn('function started')
+
   // Используется для индикации состояния ответа сервера
   const RESPONSE_STATE = {
     // мы не хотим, чтобы кто-то менял свойства этого объекта - эмулируем защищенные свойства
@@ -23,26 +21,31 @@ const url = 'https://keev.me/f/slowpoke.php';
   // Сохраняем элемент в контексте IEFE, чтобы иметь возможность манипулировать его анимацией и цветом
   const square = document.createElement('div')
   renderSquare()
-  console.warn('square rendered at:', performance.now())
 
+  warn('square rendered')
+
+  // Спустя секунду начинаем анимацию и посылаем запрос к API
   setTimeout(async () => {
-    // Promise.all гарантирует, что дальнейший код (смена цвета квадрата) исполнится только после того,
-    // как закончится анимация и будет получен ответ от API.
-    const [_, apiResponse] = await Promise.all([
-      // Через две секунды после вызова (то есть через одну секунду после старта движения) квадрат должен остановиться.
-      animateSquare(1000),
-      // В этот же момент (через секунду после вызова функции) посылается GET-запрос на переданный URL.
-      getUrlData()
-    ])
+    try {
+      // Promise.all гарантирует, что дальнейший код (смена цвета квадрата) исполнится
+      // только после того, как разрешатся оба промиса
+      const [_, apiResponse] = await Promise.all([
+        animateSquare(),
+        getUrlData()
+      ])
 
-    // меняем цвет квадрата только после того закончена его анимация и получен ответ от API
-    changeSquareColor(apiResponse)
+      changeSquareColor(apiResponse)
+      warn('square painted')
+    } catch (e) {
+      warn('network error')
+      throw e
+    }
   }, 1000)
 
 
-  /**
+  /*******************
    * Служебные функции
-   */
+   *******************/
 
   /**
    * Простая проверка валидности url
@@ -69,54 +72,51 @@ const url = 'https://keev.me/f/slowpoke.php';
   }
 
   /**
-   * Анимирует движение квадрата
+   * Анимирует движение квадрата в течении заданного времени
    * @param duration
+   * @param distanceX
    * @returns {Promise<Animation>}
    */
-  function animateSquare(duration) {
+  function animateSquare(duration = 1000, distanceX = '100px') {
     const {finished} = square.animate([
       // используем translate3D, т.к. это вынесет элемент в отдельный слой и его анимацией будет заниматься GPU
       { transform: 'translate3D(0, 0, 0)' },
       // скорость движения квадрата 100px/duration
-      { transform: 'translate3D(100px, 0, 0)' }
+      { transform: `translate3D(${distanceX}, 0, 0)` }
     ], {
       fill: "forwards",
       duration,
     })
 
-    console.warn('animation started at:', performance.now())
+    warn('animation started')
     // Промис finished разрешиться, когда анимация закончится
     return finished.then(p => {
-      console.warn('animation finished at:', performance.now())
+      warn('animation finished')
       return p
     })
   }
 
   /**
    * Посылает запрос на сервер и возвращает одно из значений RESPONSE_STATE
-   * @returns {Promise<Response>|Promise<RESPONSE_STATE._ERROR>}
+   * @returns {Promise<Response>}
    */
   function getUrlData() {
-    console.warn('request send at:', performance.now())
-    try {
-      return fetch(url)
-        .then(res => {
-          console.warn('response got at:', performance.now())
-          if (res.status !== 200) {
-            // при ошибке на сервере возвращаем
-            // -1 - RESPONSE_STATE.ERROR
-            return Promise.resolve(RESPONSE_STATE.ERROR)
-          }
-          // по условиям задачи (API контракту) может быть только
-          // 0 - RESPONSE_STATE.FAILURE и
-          // 1 - RESPONSE_STATE.SUCCESS
-          return res.json()
-        })
-    } catch (e) {
-      // при сетевой ошибке возвращаем
-      // -1 - RESPONSE_STATE.ERROR
-      return Promise.resolve(RESPONSE_STATE.ERROR)
-    }
+    warn('request send')
+
+    return fetch(url).then(res => {
+      warn('response got')
+
+      if (res.status !== 200) {
+        // при ошибке на сервере возвращаем
+        // -1 - RESPONSE_STATE.ERROR
+        return Promise.resolve(RESPONSE_STATE.ERROR)
+      }
+
+      // по условиям задачи (API контракту) может быть только
+      // 0 - RESPONSE_STATE.FAILURE и
+      // 1 - RESPONSE_STATE.SUCCESS
+      return res.json()
+    })
   }
 
   /**
@@ -126,22 +126,25 @@ const url = 'https://keev.me/f/slowpoke.php';
   function changeSquareColor(responseState) {
     switch (responseState) {
       case RESPONSE_STATE.SUCCESS:
-        console.log('RESPONSE_STATE.SUCCESS')
+        // console.log('RESPONSE_STATE.SUCCESS')
         square.style.backgroundColor = 'green'
         break
       case RESPONSE_STATE.FAILURE:
-        console.log('RESPONSE_STATE.FAILURE')
+        // console.log('RESPONSE_STATE.FAILURE')
         square.style.backgroundColor = 'blue'
         break
       case RESPONSE_STATE.ERROR:
-        console.log('RESPONSE_STATE.ERROR')
+        // console.log('RESPONSE_STATE.ERROR')
         square.style.backgroundColor = 'red'
         break
       default:
-        square.style.backgroundColor = 'yellow'
         throw Error('Unknown response')
     }
   }
-})(url)
+
+  function warn(message) {
+    console.warn(`${message} at:`, performance.now())
+  }
+}
 
 
