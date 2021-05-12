@@ -53,6 +53,7 @@ function doThatStuff(url) {
 
   /**
    * Простая проверка валидности url
+   * @param url
    * @returns {boolean}
    */
   function isUrlValid(url) {
@@ -61,6 +62,7 @@ function doThatStuff(url) {
 
   /**
    * Задаем свойства квадрата и добавляем его в DOM
+   * @param square - DOM элемент
    */
   function renderSquare(square) {
     // позиционируем абсолютно, тем самым избегаем reflow при анимации
@@ -102,6 +104,7 @@ function doThatStuff(url) {
 
   /**
    * Посылает запрос на сервер и возвращает одно из значений RESPONSE_STATE.
+   * @param url
    * @returns {Promise<Response>}
    */
   function getUrlData(url) {
@@ -125,7 +128,8 @@ function doThatStuff(url) {
 
   /**
    * Изменяет цвет квадрата в зависимости от responseState.
-   * @param responseState
+   * @param square - DOM Элемент
+   * @param responseState - Код ответа сервера
    */
   function changeSquareColor(square, responseState) {
     switch (responseState) {
