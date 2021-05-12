@@ -3,17 +3,6 @@ doThatStuff('https://keev.me/f/slowpoke.php')
 function doThatStuff(url) {
   warn('function started')
 
-  // Используется для индикации состояния ответа сервера
-  const RESPONSE_STATE = {
-    // мы не хотим, чтобы кто-то менял свойства этого объекта - эмулируем защищенные свойства
-    _FAILURE: 0,
-    _SUCCESS: 1,
-    _ERROR: -1,
-    get FAILURE() { return this._FAILURE },
-    get SUCCESS() { return this._SUCCESS },
-    get ERROR() { return this._ERROR }
-  }
-
   if (!isUrlValid()) {
     throw new Error()
   }
@@ -37,15 +26,30 @@ function doThatStuff(url) {
       changeSquareColor(apiResponse)
       warn('square painted')
     } catch (e) {
+      // констатируем ошибку и пробрасываем исключение выше
       warn('network error')
       throw e
     }
   }, 1000)
 
 
-  /*******************
-   * Служебные функции
-   *******************/
+
+  /********************************
+   * Служебные функции и константы
+   ********************************/
+
+  /** Используется для индикации состояния ответа сервера
+   * @type {{readonly SUCCESS: number, _SUCCESS: number, _ERROR: number, readonly ERROR: number, _FAILURE: number, readonly FAILURE: number}}
+   */
+  const RESPONSE_STATE = {
+      // мы не хотим, чтобы кто-то менял свойства этого объекта - эмулируем защищенные свойства
+      _FAILURE: 0,
+      _SUCCESS: 1,
+      _ERROR: -1,
+      get FAILURE() { return this._FAILURE },
+      get SUCCESS() { return this._SUCCESS },
+      get ERROR() { return this._ERROR }
+    }
 
   /**
    * Простая проверка валидности url
