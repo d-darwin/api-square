@@ -3,13 +3,13 @@ doThatStuff('https://keev.me/f/slowpoke.php')
 function doThatStuff(url) {
   warn('function started')
 
-  if (!isUrlValid()) {
+  if (!isUrlValid(url)) {
     throw new Error()
   }
 
   // Сохраняем элемент в контексте IEFE, чтобы иметь возможность манипулировать его анимацией и цветом
   const square = document.createElement('div')
-  renderSquare()
+  renderSquare(square)
 
   warn('square rendered')
 
@@ -19,11 +19,11 @@ function doThatStuff(url) {
       // Promise.all гарантирует, что дальнейший код (смена цвета квадрата) исполнится
       // только после того, как разрешатся оба промиса
       const [_, apiResponse] = await Promise.all([
-        animateSquare(),
-        getUrlData()
+        animateSquare(square),
+        getUrlData(url)
       ])
 
-      changeSquareColor(apiResponse)
+      changeSquareColor(square, apiResponse)
       warn('square painted with apiResponseCode: ' + apiResponse)
     } catch (e) {
       // констатируем ошибку и пробрасываем исключение выше
@@ -55,14 +55,14 @@ function doThatStuff(url) {
    * Простая проверка валидности url
    * @returns {boolean}
    */
-  function isUrlValid() {
+  function isUrlValid(url) {
     return /^(http|https):\/\/[^ "]+$/.test(url)
   }
 
   /**
    * Задаем свойства квадрата и добавляем его в DOM
    */
-  function renderSquare() {
+  function renderSquare(square) {
     // позиционируем абсолютно, тем самым избегаем reflow при анимации
     square.style.position = 'absolute'
     // кроме отсутствия reflow абсолютное позиционирование позволяет нам
@@ -76,16 +76,15 @@ function doThatStuff(url) {
   }
 
   /**
-   * Анимирует движение квадрата в течении заданного времени
-   * @param duration
-   * @param distanceX
+   * Анимирует движение квадрата слева направо
+   * @param square - DOM элемент
+   * @param duration - продолжительность анимации
+   * @param distanceX - смещение
    * @returns {Promise<Animation>}
    */
-  function animateSquare(duration = 1000, distanceX = '100px') {
+  function animateSquare(square, duration = 1000, distanceX = '100px') {
     const {finished} = square.animate([
-      // используем translate3D, т.к. это вынесет элемент в отдельный слой и его анимацией будет заниматься GPU
       { transform: 'translate3D(0, 0, 0)' },
-      // скорость движения квадрата 100px/duration
       { transform: `translate3D(${distanceX}, 0, 0)` }
     ], {
       fill: "forwards",
@@ -93,6 +92,7 @@ function doThatStuff(url) {
     })
 
     warn('animation started')
+
     // Промис finished разрешиться, когда анимация закончится
     return finished.then(p => {
       warn('animation finished')
@@ -101,10 +101,10 @@ function doThatStuff(url) {
   }
 
   /**
-   * Посылает запрос на сервер и возвращает одно из значений RESPONSE_STATE
+   * Посылает запрос на сервер и возвращает одно из значений RESPONSE_STATE.
    * @returns {Promise<Response>}
    */
-  function getUrlData() {
+  function getUrlData(url) {
     warn('request send')
 
     return fetch(url).then(res => {
@@ -124,21 +124,18 @@ function doThatStuff(url) {
   }
 
   /**
-   * Изменяет цвет квадрата в зависимости от responseState
+   * Изменяет цвет квадрата в зависимости от responseState.
    * @param responseState
    */
-  function changeSquareColor(responseState) {
+  function changeSquareColor(square, responseState) {
     switch (responseState) {
       case RESPONSE_STATE.SUCCESS:
-        // console.log('RESPONSE_STATE.SUCCESS')
         square.style.backgroundColor = 'green'
         break
       case RESPONSE_STATE.FAILURE:
-        // console.log('RESPONSE_STATE.FAILURE')
         square.style.backgroundColor = 'blue'
         break
       case RESPONSE_STATE.ERROR:
-        // console.log('RESPONSE_STATE.ERROR')
         square.style.backgroundColor = 'red'
         break
       default:
@@ -146,6 +143,10 @@ function doThatStuff(url) {
     }
   }
 
+  /**
+   * Отмечает в консоли сообщения с моментом времени.
+   * @param message
+   */
   function warn(message) {
     console.warn(`${message} at:`, performance.now())
   }
